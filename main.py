@@ -4,10 +4,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from Price_Monitoring_Tool.Price_Monitoring_Tool.spiders import ProductSpider
+from PMT_scrapy.PMT_scrapy.spiders import ProductSpider
 from Display import pprint
 import json               
-  
+import os
 import time 
 
 def match_keyword_in_url(url, keywords):
@@ -31,7 +31,7 @@ def update_urldata(url_list, item_to_search, url_name):
 	dictionary[url_name] = list(set(final_list))
 	json_object = json.dumps(dictionary, indent=4)
 
-	with open(r"Price_Monitoring_Tool\Price_Monitoring_Tool\spiders\url_list.json", "w") as output:
+	with open(r"PMT_scrapy\PMT_scrapy\spiders\url_list.json", "w") as output:
 		output.write(json_object)
 		output.close()
 
@@ -39,22 +39,26 @@ def get_minimum():
 	product_details = []
 	files = ["amazon_items.json", "flipkart_items.json", "snapdeal_items.json"]
 	for file in files:
-		with open(file, "r") as details:
-			content = json.load(details)
-			product_details.append(content)
-			details.close()
+		if os.path.exists(file):
+			with open(file, "r") as details:
+				content = json.load(details)
+				product_details.append(content)
+				details.close()
 	amazon = sorted(product_details[0], key = lambda x: x["product_sale_price"])
 	amazon = amazon[:3]
 	flipkart = sorted(product_details[1], key = lambda x: x["product_sale_price"])
 	flipkart = flipkart[:3]
 	snapdeal = sorted(product_details[2], key = lambda x: x["product_sale_price"])
 	snapdeal = snapdeal[:3]
-	return pprint(min([amazon[0], flipkart[0], snapdeal[0]], key = lambda x:x['product_sale_price']))
+	pprint(min([amazon[0], flipkart[0], snapdeal[0]], key = lambda x:x['product_sale_price']))
 
 
-def amazon_scrape(URL, item_to_search):        
-	browser = webdriver.Firefox(executable_path="geckodriver.exe")
+def amazon_scrape(URL, item_to_search):
+	options = webdriver.FirefoxOptions()
+	options.add_argument('-headless')      
+	browser = webdriver.Firefox(executable_path="geckodriver.exe", options=options)
 	browser.get(URL)
+	
 	try: 
 		element = WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.ID, 'twotabsearchtextbox'))) 
 	except TimeoutException as e: 
@@ -177,17 +181,32 @@ def tatacliq_scrape(URL, item_to_search):
 if __name__ == '__main__':
 	item_to_search = input("Enter name of item: ")
 	
-	URL = 'https://www.amazon.in/'
-	amazon_scrape(URL, item_to_search)
+	try:
+		URL = 'https://www.amazon.in/'
+		amazon_scrape(URL, item_to_search)
+	except Exception as e:
+		print(e)
+		pass
+	try:
+		URL = 'https://www.flipkart.com/'
+		flipkart_scrape(URL, item_to_search)
+	except Exception as e:
+		print(e)
+		pass
 
-	URL = 'https://www.flipkart.com/'
-	flipkart_scrape(URL, item_to_search)
+	try:
+		URL = 'https://www.snapdeal.com/'
+		snapdeal_scrape(URL, item_to_search)
+	except Exception as e:
+		print(e)
+		pass
 
-	URL = 'https://www.snapdeal.com/'
-	snapdeal_scrape(URL, item_to_search)
-
-	URL = 'https://www.tatacliq.com/'
-	tatacliq_scrape(URL, item_to_search)
+	try:
+		URL = 'https://www.tatacliq.com/'
+		tatacliq_scrape(URL, item_to_search)
+	except Exception as e:
+		print(e)
+		pass
 
 	ProductSpider.run_all_spiders()
 
