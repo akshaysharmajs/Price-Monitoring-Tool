@@ -1,5 +1,5 @@
 import scrapy
-from Price_Monitoring_Tool.Price_Monitoring_Tool.items import AmazonItem, FlipkartItem, SnapdealItem
+from PMT_scrapy.PMT_scrapy.items import AmazonItem, FlipkartItem, SnapdealItem
 import json
 import re
 from scrapy.crawler import CrawlerProcess
@@ -7,7 +7,7 @@ from scrapy.utils.project import get_project_settings
 import os
 
 def urls_list(name):
-  with open(r"Price_Monitoring_Tool\Price_Monitoring_Tool\spiders\url_list.json", 'r') as urls:
+  with open(r"PMT_scrapy\PMT_scrapy\spiders\url_list.json", 'r') as urls:
     dictionary = json.load(urls)
     urls.close()
   return dictionary[name]

@@ -18,7 +18,7 @@ def match_keyword_in_url(url, keywords):
 
 def update_urldata(url_list, item_to_search, url_name):
 	final_list = []
-	with open(r"Price_Monitoring_Tool\Price_Monitoring_Tool\spiders\url_list.json", "r") as oldfile:
+	with open(r"PMT_scrapy\PMT_scrapy\spiders\url_list.json", "r") as oldfile:
 		dictionary = json.load(oldfile)
 		oldfile.close()
 
