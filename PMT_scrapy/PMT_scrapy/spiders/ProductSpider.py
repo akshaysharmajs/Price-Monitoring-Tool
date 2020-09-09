@@ -1,5 +1,5 @@
 import scrapy
-from PMT_scrapy.PMT_scrapy.items import AmazonItem, FlipkartItem, SnapdealItem
+from PMT_scrapy.PMT_scrapy.items import AmazonItem, FlipkartItem, SnapdealItem, EbayItem
 import json
 import re
 from scrapy.crawler import CrawlerProcess
@@ -108,6 +108,45 @@ class snapdealspider(scrapy.Spider):
       items['product_url'] = response.url
       yield items
 
+class ebayspider(scrapy.Spider):
+  name = "ebayspider"
+
+  custom_settings = {
+                        "FEEDS": {
+                            "ebay_items.json": {"format": "json"},
+                        },
+                    }
+
+  def start_requests(self):
+    urls = urls_list('ebay_url')
+    for url in urls:
+      yield scrapy.Request(url=url, callback=self.parse)
+
+  def parse(self, response):
+    items = EbayItem()
+    title = response.css('[id="itemTitle"]::text').get()
+    sale_price = response.css('[id="convbinPrice"]::text').get()
+    avail = "Available"
+    try:
+      avail = response.css('[id="qtySubTxt"]').getall()[0]
+      if 'available' in avail.lower():
+        avail = "Available"
+      else:
+        avail = "Sold Out"
+    except:
+      pass
+    
+    if avail and title and sale_price:
+      sale_price = sale_price.replace(",","")
+      sale_price = sale_price.split()[1]
+      sale_price = sale_price.split(".")[0]
+      items['product_name'] = ''.join(title).strip()
+      items['product_sale_price'] = ''.join(sale_price).strip()
+      items['product_availability'] = ''.join(avail).strip()
+      items['product_url'] = response.url
+      yield items
+
+
 def run_all_spiders():
   if os.path.exists("amazon_items.json"):
     os.remove("amazon_items.json")
@@ -115,8 +154,11 @@ def run_all_spiders():
     os.remove("flipkart_items.json")
   if os.path.exists("snapdeal_items.json"):
     os.remove("snapdeal_items.json")
+  if os.path.exists("ebay_items.json"):
+    os.remove("ebay_items.json")
   process = CrawlerProcess(get_project_settings())
   process.crawl(amazonspider)
   process.crawl(flipkartspider)
   process.crawl(snapdealspider)
+  process.crawl(ebayspider)
   process.start()
