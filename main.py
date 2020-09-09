@@ -25,7 +25,7 @@ def update_urldata(url_list, item_to_search, url_name):
 	item_to_search = item_to_search.lower().split()
 
 	for url in url_list:
-		if match_keyword_in_url(url, item_to_search):
+		if match_keyword_in_url(url.lower(), item_to_search):
 			final_list.append(url)
 
 	dictionary[url_name] = list(set(final_list))
@@ -37,21 +37,57 @@ def update_urldata(url_list, item_to_search, url_name):
 
 def get_minimum():
 	product_details = []
-	files = ["amazon_items.json", "flipkart_items.json", "snapdeal_items.json"]
+	files = ["amazon_items.json", "flipkart_items.json", "snapdeal_items.json","ebay_items.json"]
 	for file in files:
 		if os.path.exists(file):
 			with open(file, "r") as details:
 				content = json.load(details)
 				product_details.append(content)
 				details.close()
-	amazon = sorted(product_details[0], key = lambda x: x["product_sale_price"])
-	amazon = amazon[:3]
-	flipkart = sorted(product_details[1], key = lambda x: x["product_sale_price"])
-	flipkart = flipkart[:3]
-	snapdeal = sorted(product_details[2], key = lambda x: x["product_sale_price"])
-	snapdeal = snapdeal[:3]
-	pprint(min([amazon[0], flipkart[0], snapdeal[0]], key = lambda x:x['product_sale_price']))
+	try:
+		amazon = sorted(product_details[0], key = lambda x: int(x["product_sale_price"]))
+		amazon = amazon[:3]
+	except:
+		print("Amazon Time Out!")
 
+	try:
+		flipkart = sorted(product_details[1], key = lambda x: int(x["product_sale_price"]))
+		flipkart = flipkart[:3]
+	except:
+		print("Flipkart Time Out!")
+
+	try:
+		snapdeal = sorted(product_details[2], key = lambda x: int(x["product_sale_price"]))
+		snapdeal = snapdeal[:3]
+	except:
+		print("Snapdeal Time Out!")
+
+	try:
+		ebay = sorted(product_details[3], key = lambda x: int(x["product_sale_price"]))
+		ebay = ebay[:3]
+	except:
+		print("Ebay Time Out!")
+
+	pprint("Overall Cheapest Product:")
+	print()
+	pprint(min([amazon[0], flipkart[0], snapdeal[0], ebay[0]], key = lambda x:int(x['product_sale_price'])))
+	print("\n\n")
+	pprint("Top 3 Cheapest Product On Amazon:")
+	for product in amazon:
+		print(product)
+	print("\n\n")
+	pprint("Top 3 Cheapest Product On Flipkart:")
+	for product in flipkart:
+		print(product)
+	print("\n\n")
+	pprint("Top 3 Cheapest Product On Snapdeal:")
+	for product in snapdeal:
+		print(product)
+	print("\n\n")
+	pprint("Top 3 Cheapest Product On ebay:")
+	for product in ebay:
+		print(product)
+	
 
 def amazon_scrape(URL, item_to_search):
 	options = webdriver.FirefoxOptions()
@@ -149,19 +185,20 @@ def snapdeal_scrape(URL, item_to_search):
 
 		return (print("GOT URLs FROM SNAPDEAL\n"))
 
-def tatacliq_scrape(URL, item_to_search):
+def ebay_scrape(URL, item_to_search):
 	browser = webdriver.Firefox(executable_path="geckodriver.exe")
+
 	browser.get(URL)
 
 	try:
-		element = WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.CLASS_NAME, '_2wBdAJ6BFwpXejbzsJBPO0')))
+		element = WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.ID, 'gh-ac')))
 	except TimeoutException as e:
 		print("Time out!")
 
-	browser.find_element_by_class_name('_2wBdAJ6BFwpXejbzsJBPO0').send_keys(item_to_search + Keys.RETURN)
+	browser.find_element_by_id('gh-ac').send_keys(item_to_search + Keys.RETURN)
 
 	try:
-		results = WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.ID, "grid-container")))
+		results = WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.ID, "srp-river-main")))
 	except TimeoutException as e:
 		print("Time out!")
 
@@ -173,10 +210,10 @@ def tatacliq_scrape(URL, item_to_search):
 		for result in results.find_elements_by_tag_name('a'):
 			url_list.append(result.get_attribute("href"))
 
-		update_urldata(url_list, item_to_search, "tatacliq_url")
+		update_urldata(url_list, item_to_search, "ebay_url")
 
-		return (print("GOT URLs FROM TATACLIQ\n"))
-
+		return (print("GOT URLs FROM EBAY\n"))
+	
 
 if __name__ == '__main__':
 	item_to_search = input("Enter name of item: ")
@@ -202,8 +239,8 @@ if __name__ == '__main__':
 		pass
 
 	try:
-		URL = 'https://www.tatacliq.com/'
-		tatacliq_scrape(URL, item_to_search)
+		URL = 'https://in.ebay.com/'
+		ebay_scrape(URL, item_to_search)
 	except Exception as e:
 		print(e)
 		pass
