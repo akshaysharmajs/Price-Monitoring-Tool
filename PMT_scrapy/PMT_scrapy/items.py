@@ -24,3 +24,9 @@ class SnapdealItem(scrapy.Item):
   product_sale_price = scrapy.Field()
   product_availability = scrapy.Field()
   product_url = scrapy.Field()
+
+class EbayItem(scrapy.Item):
+  product_name = scrapy.Field()
+  product_sale_price = scrapy.Field()
+  product_availability = scrapy.Field()
+  product_url = scrapy.Field()
